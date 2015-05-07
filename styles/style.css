@@ -1,0 +1,66 @@
+body {
+    background: #F5F5F5;
+}
+
+#topBar {
+    background: white;
+    height: 160px;
+    width: 100%;
+}
+#infoBar {
+    background: #D70932;
+    height: 24px;
+    width: 100%;
+}
+
+#menuBar {
+    background: #999999;
+    height: 38px;
+    width: 100%;
+}
+
+.topBarImgCoesia {
+    position:relative;
+    float: left;
+    top: 40px;
+}
+
+.topBarImg {
+    position:relative;
+    float: left;
+    margin-left: 20%;
+    margin-right: auto;
+    top: 20px;
+    width: 707px;
+}
+
+.topBarImgGD {
+    position:relative;
+    float: right;
+    /*margin-left: 15%;*/
+    /*position: absolute;*/
+    /*right: 5px;*/
+    /*overflow: auto;*/
+    /*width: 40%;*/
+    /*height: 40%;*/
+    /*margin: 0 auto;*/
+    /*background-size: cover;*/
+    /*background: url('../images/GD_Logo.jpg') no-repeat;*/
+}
+.collapsed{
+    visibility: collapse;
+}
+
+.visible{
+    visibility: visible;
+}
+
+.hmi {
+
+    border: solid;
+    border-color: #999999;
+    border-radius: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+}

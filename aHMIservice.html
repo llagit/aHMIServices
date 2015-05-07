@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <style>
+        body {
+            background: #F5F5F5;
+        }
+
+        #topBar {
+            background: white;
+            height: 160px;
+            width: 100%;
+        }
+        #infoBar {
+            background: #D70932;
+            height: 24px;
+            width: 100%;
+        }
+
+        #menuBar {
+            background: #999999;
+            height: 38px;
+            width: 100%;
+        }
+
+        .topBarImgCoesia {
+            position:relative;
+            float: left;
+            top: 40px;
+        }
+
+        .topBarImg {
+            position:relative;
+            float: left;
+            margin-left: 20%;
+            margin-right: auto;
+            top: 20px;
+            width: 707px;
+        }
+
+        .topBarImgGD {
+            position:relative;
+            float: right;
+            /*margin-left: 15%;*/
+            /*position: absolute;*/
+            /*right: 5px;*/
+            /*overflow: auto;*/
+            /*width: 40%;*/
+            /*height: 40%;*/
+            /*margin: 0 auto;*/
+            /*background-size: cover;*/
+            /*background: url('../images/GD_Logo.jpg') no-repeat;*/
+        }
+        .collapsed{
+            visibility: collapse;
+        }
+
+        /*.visible{*/
+            /*visibility: visible;*/
+        /*}*/
+
+        .hmi {
+
+            border: solid;
+            border-color: #999999;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+    </style>
+    <script>
+
+        var EventUtil = {
+            addHandler: function(element, type, handler) {
+                if (element.addEventListener) {
+                    element.addEventListener(type, handler, false);
+                } else if (element.attachEvent) {
+                    element.attachEvent("on" + type, handler);
+                } else {
+                    element["on" + type] = handler;
+                }
+            },
+            removeHandler: function(element, type, handler) {
+                if (element.removeEventListener) {
+                    element.removeEventListener(type, handler, false);
+                } else if (element.detachEvent) {
+                    element.detachEvent("on" + type, handler);
+                } else {
+                    element["on" + type] = null;
+                }
+            },
+            getCurrentTarget: function(e) {
+                if (e.toElement) {
+                    return e.toElement;
+                } else if (e.currentTarget) {
+                    return e.currentTarget;
+                } else if (e.srcElement) {
+                    return e.srcElement;
+                } else {
+                    return null;
+                }
+            },
+            preventDefault: function(e) {
+                e.preventDefault ? e.preventDefault() : e.returnValue = false;
+            },
+
+            /**
+             * @author http://www.quirksmode.org/js/events_properties.html
+             * @method getMousePosition
+             * @param e
+             */
+            getMousePosition: function(e) {
+                var posx = 0,
+                        posy = 0;
+                if (!e) {
+                    e = window.event;
+                }
+
+                if (e.pageX || e.pageY) {
+                    posx = e.pageX;
+                    posy = e.pageY;
+                }
+                else if (e.clientX || e.clientY) {
+                    posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+                    posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+                }
+
+                return {
+                    x: posx,
+                    y: posy
+                };
+            }
+
+        };
+
+        var myIP=[];
+
+        function setAddr(){
+
+            var text = document.getElementsByName('ipAddr');
+            //var num = myIP.length;
+            myIP.push(text[0].value);
+
+            if(!document.getElementById(text[0].value))
+                getAHMIInfo(myIP[myIP.length-1]);
+        }
+
+
+        function getAHMIInfo(ip) {
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var myArr = JSON.parse(xmlhttp.responseText);
+
+                    var thisIp = myIP[myIP.length-1];
+
+                    var out = "<div class='hmi'>";
+                    out += "<span hidden id='" + thisIp + "' ></span>";
+                    out += "<h1>aHMI Found!</h1>";
+                    out += "<p>"+ myArr.GetAHMIInfoResult.PcName + "</p>";
+                    out += "<p>"+ myArr.GetAHMIInfoResult.aHMIVersion + "</p>";
+                    out += "<div id='"+ thisIp +"_getLanguages' class='servicesChoice'><button onclick='getLanguages(this)'>Get Languages</button></div>";
+                    out += "<div id='"+ thisIp +"_getMessageHistoryList' class='servicesChoice'><button onclick='getMessageHistoryList(this)'>Get Messages</button></div>";
+                    out += "<div id='"+ thisIp +"_getMachineList' class='servicesChoice'><button onclick='getMachineList(this)'>Get Machine List</button></div>";
+                    out += "<div id='"+ thisIp +"_getCurrentVelocity' class='servicesChoice'><button onclick='getCurrentVelocity(this)'>Get current velocity</button></div>";
+                    out += "<div id='"+ thisIp +"_getNominalVelocity' class='servicesChoice'><button onclick='getNominalVelocity(this)'>Get nominal velocity</button></div>";
+                    out += "</div>";
+
+
+                    document.getElementById("aHMIList").innerHTML += out;
+                    document.getElementById("aHMIList").classList.remove('collapsed');
+
+                }
+
+            };
+
+            var url = "http://" + ip + ":8008/RestDataExchange/service/web/GetAHMIInfo";
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+
+        }
+
+        function getLanguages(s){
+
+            var ip = s.parentElement.parentElement.firstElementChild.id;
+
+            var url = "http://" + ip + ":8008/RestDataExchange/service/web/GetLanguageList";
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var myArr = JSON.parse(xmlhttp.responseText);
+                    var ip = xmlhttp.responseURL.split("://")[1].split(":")[0];
+
+                    var mainDiv = document.createElement("DIV");
+                    mainDiv.id = ip + "_ans_getLanguages";
+
+                    mainDiv.appendChild(document.createElement('br'));
+
+                    myArr.GetLanguageListResult.forEach(function(s){
+
+                        var theButton = document.createElement("BUTTON");
+                        theButton.style.marginRight = "10px";
+                        EventUtil.addHandler(theButton,'click',function(){
+                            setLanguage(theButton);
+                        });
+                        var theButtonText = document.createTextNode(s);
+                        theButton.appendChild(theButtonText);
+
+                        mainDiv.appendChild(theButton);
+
+                    });
+
+                    mainDiv.appendChild(document.createElement('br'));
+                    mainDiv.appendChild(document.createElement('br'));
+
+                    var former = document.getElementById(ip + "_ans_getLanguages");
+                    if(former) document.getElementById(ip + "_getLanguages").removeChild(former);
+                    document.getElementById(ip + "_getLanguages").appendChild(mainDiv);
+                    //
+                    //
+                    //
+                    //var out = "</br></br>";
+                    //var i;
+                    //for(i = 0; i < myArr.GetLanguageListResult.length; i++) {
+                    //    out += '<button style="margin-right: 10px" onclick="setLanguage(this)">' + myArr.GetLanguageListResult[i] + '</button>';
+                    //}
+                    //
+                    //var ip = xmlhttp.responseURL.split("://")[1].split(":")[0];
+                    ////var node = document.createElement("LI");                 // Create a <li> node
+                    ////var textnode = document.createTextNode("Water");         // Create a text node
+                    //
+                    //document.getElementById(ip + "_getLanguages").innerHTML += out + "</br></br>";
+                }
+
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+
+        function setLanguage(s){
+            var xmlhttp = new XMLHttpRequest();
+            //var url = "http://10.11.28.64:8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + s.innerHTML;
+            var ip = s.parentElement.parentElement.firstElementChild.innerText;
+            var url = "http://" + ip + ":8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + s.innerHTML;
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+
+        }
+
+        function getMessageHistoryList(s){
+
+
+            var ip = s.parentElement.parentElement.firstElementChild.id;
+
+            var url = "http://" + ip + ":8008/RestDataExchange/service/web/GetMessageHistoryList";
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var myArr = JSON.parse(xmlhttp.responseText);
+
+                    var out = "";
+
+                    myArr.GetMessageHistoryListResult.forEach(function(s){
+                        out += '<p>' + s + '</p>';
+                    });
+
+                    //for(i = 0; i < myArr.GetMessageHistoryListResult.length; i++) {
+                    //    out += '<button onclick="setLanguage(this)">' + myArr.GetLanguageListResult[i] + '</button>';
+                    //}
+
+                    var ip = xmlhttp.responseURL.split("://")[1].split(":")[0];
+                    //var node = document.createElement("LI");                 // Create a <li> node
+                    //var textnode = document.createTextNode("Water");         // Create a text node
+
+                    document.getElementById(ip).parentElement.innerHTML += out;
+                }
+
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+
+        function getMachineList(s){
+
+            var ip = s.parentElement.parentElement.firstElementChild.id;
+
+            var url = "http://" + ip + ":8008/RestDataExchange/service/web/GetMachineList?replyLanguage=English";
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var myArr = JSON.parse(xmlhttp.responseText);
+                    var ipDetected = xmlhttp.responseURL.split("://")[1].split(":")[0];
+
+                    var mainDiv = document.createElement("DIV");
+                    mainDiv.id = ipDetected + "_ans_getMachineList";
+
+                    myArr.GetMachineListResult.forEach(function(s){
+                        //out += '<p >' + s.Id + '</p>';
+
+                        var idTitleTag = document.createElement("H3");
+                        var idTitle = document.createTextNode("Machine Id and Name:");
+                        idTitleTag.appendChild(idTitle);
+
+                        var idValTag = document.createElement("P");
+                        var idVal = document.createTextNode("ID: " + s.Id);
+                        idValTag.appendChild(idVal);
+
+                        var nameValTag = document.createElement("P");
+                        var nameVal = document.createTextNode("Name: " + s.Text);
+                        nameValTag.appendChild(nameVal);
+
+                        mainDiv.appendChild(idTitleTag);
+                        mainDiv.appendChild(idValTag);
+                        mainDiv.appendChild(nameValTag);
+
+
+                    });
+
+                    //for(i = 0; i < myArr.GetMessageHistoryListResult.length; i++) {
+                    //    out += '<button onclick="setLanguage(this)">' + myArr.GetLanguageListResult[i] + '</button>';
+                    //}
+
+                    //var node = document.createElement("LI");                 // Create a <li> node
+                    //var textnode = document.createTextNode("Water");         // Create a text node
+
+                    var former = document.getElementById(mainDiv.id);
+                    if (former) document.getElementById(ipDetected + "_getMachineList").removeChild(former);
+
+                    document.getElementById(ipDetected + "_getMachineList").appendChild(mainDiv);
+                }
+
+            };
+
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+
+        function getCurrentVelocity(s) {
+
+            var ip = s.parentElement.parentElement.firstElementChild.id;
+
+            var ans = document.getElementById(ip + "_ans_getCurrentVelocity");
+            if(ans) document.getElementById(ip + "_getCurrentVelocity").removeChild(ans);
+
+            var theP = document.createElement("P");
+            var thePText = document.createTextNode("Machine?");
+            theP.appendChild(thePText);
+
+            var theInput = document.createElement("INPUT");
+            theInput.type = "text";
+            theInput.name = ip +"_mch_getCurrentVelocity";
+
+            var theButton = document.createElement("BUTTON");
+            EventUtil.addHandler(theButton,'click',function(){
+                getCurrentVelocityService(ip);
+            });
+            var theButtonText = document.createTextNode("Ok");
+            theButton.appendChild(theButtonText);
+
+            var mainDiv = document.createElement("DIV");
+            mainDiv.id = ip + "_quest_getCurrentVelocity";
+            mainDiv.appendChild(theP);
+            mainDiv.appendChild(theInput);
+            mainDiv.appendChild(theButton);
+
+            document.getElementById(ip + "_getCurrentVelocity").appendChild(mainDiv);
+
+        }
+
+        function getCurrentVelocityService(s) {
+
+            var val = s;
+            var mchId = document.getElementsByName(val + "_mch_getCurrentVelocity")[0].value;
+
+            var url = "http://" + val + ":8008/RestDataExchange/service/web/GetCurrentVelocity?machineId=" + mchId;
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var myArr = JSON.parse(xmlhttp.responseText);
+                    var ip = xmlhttp.responseURL.split("://")[1].split(":")[0];
+
+                    var out = myArr.GetCurrentVelocityResult;
+
+                    var H3AnswerTitle = document.createElement("H3");
+                    H3AnswerTitle.appendChild(document.createTextNode("Current Velocity:"));
+
+                    var PAnswer = document.createElement("P");
+                    PAnswer.appendChild(document.createTextNode(out));
+
+                    var DivAnswer = document.createElement("DIV");
+                    DivAnswer.id = ip + "_ans_getCurrentVelocity";
+
+                    DivAnswer.appendChild(H3AnswerTitle);
+                    DivAnswer.appendChild(PAnswer);
+
+                    document.getElementById(ip + "_getCurrentVelocity").removeChild(document.getElementById(ip + "_quest_getCurrentVelocity"));
+                    document.getElementById(ip + "_getCurrentVelocity").appendChild(DivAnswer);
+                }
+
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+
+        function getNominalVelocity(s) {
+
+            var ip = s.parentElement.parentElement.firstElementChild.id;
+
+            var ans = document.getElementById(ip + "_ans_getNominalVelocity");
+            if(ans) document.getElementById(ip + "_getNominalVelocity").removeChild(ans);
+
+            var theP = document.createElement("P");
+            var thePText = document.createTextNode("Machie?");
+            theP.appendChild(thePText);
+
+            var theInput = document.createElement("INPUT");
+            theInput.type = "text";
+            theInput.name = ip +"_mch_getNominalVelocity";
+
+            var theButton = document.createElement("BUTTON");
+            EventUtil.addHandler(theButton,'click',function(){
+                getNominalVelocityService(ip);
+            });
+            var theButtonText = document.createTextNode("Ok");
+            theButton.appendChild(theButtonText);
+
+            var mainDiv = document.createElement("DIV");
+            mainDiv.id = ip + "_quest_getNominalVelocity";
+            mainDiv.appendChild(theP);
+            mainDiv.appendChild(theInput);
+            mainDiv.appendChild(theButton);
+
+            document.getElementById(ip + "_getNominalVelocity").appendChild(mainDiv);
+
+        }
+
+        function getNominalVelocityService(s){
+
+            var val = s;
+            var mchId = document.getElementsByName(val + "_mch_getNominalVelocity")[0].value;
+
+            var url = "http://" + val + ":8008/RestDataExchange/service/web/GetNominalVelocity?machineId=" + mchId;
+            var xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var myArr = JSON.parse(xmlhttp.responseText);
+                    var ip = xmlhttp.responseURL.split("://")[1].split(":")[0];
+
+                    var out = myArr.GetNominalVelocityResult;
+
+                    var H3AnswerTitle = document.createElement("H3");
+                    H3AnswerTitle.appendChild(document.createTextNode("Nominal Velocity:"));
+
+                    var PAnswer = document.createElement("P");
+                    PAnswer.appendChild(document.createTextNode(out));
+
+                    var DivAnswer = document.createElement("DIV");
+                    DivAnswer.id = ip + "_ans_getNominalVelocity";
+
+                    DivAnswer.appendChild(H3AnswerTitle);
+                    DivAnswer.appendChild(PAnswer);
+
+                    document.getElementById(ip + "_getNominalVelocity").removeChild(document.getElementById(ip + "_quest_getNominalVelocity"));
+                    document.getElementById(ip + "_getNominalVelocity").appendChild(DivAnswer);
+                }
+
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+
+    </script>
+    <title>aHMIService</title>
+</head>
+<body>
+
+<div id="topBar">
+    <div  class="topBarImgCoesia" >
+        <img src="images/Coesia.PNG">
+    </div>
+    <div  class="topBarImg" >
+        <img src="images/CoesiaTopImage.png">
+    </div>
+    <div class="topBarImgGD">
+        <img src="images/GD_Logo.jpg">
+    </div>
+</div>
+<div id="infoBar">
+</div>
+<div id="menuBar">
+</div>
+<div id="Content">
+
+    <div id="setAddr">
+        <h3>Add aHMI by specifying IP address: </h3>
+        <label>
+            <input type="text" name="ipAddr">
+        </label>
+        <button onclick="setAddr()" > Ok </button>
+    </div>
+
+    <div id="aHMIList" class="aHMI collapsed"></div>
+</div>
+</body>
+</html>

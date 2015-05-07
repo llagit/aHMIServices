@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <link rel="stylesheet" type="text/css" href="styles/style.css"/>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="scripts/utils.js" ></script>
+    <script type="text/javascript" src="scripts/app.js" ></script>
+    <title></title>
+</head>
+<body >
+
+<!--<svg xmlns="http://www.w3.org/2000/svg"-->
+     <!--xmlns:xlink="http://www.w3.org/1999/xlink"-->
+     <!--width="400" height="100">-->
+    <!--<clipPath id="clip1">-->
+        <!--<circle id="clipShape" cx="60" cy="60" r="50" />-->
+    <!--</clipPath>-->
+    <!--<rect x="20" y="20" width="100" height="100" fill="blue"-->
+          <!--clip-path="url(#clip1)" />-->
+<!--</svg>-->
+
+<div id="topBar">
+    <div  class="topBarImgCoesia" >
+        <img src="images/Coesia.PNG">
+    </div>
+    <div  class="topBarImg" >
+        <img src="images/CoesiaTopImage.png">
+    </div>
+    <div class="topBarImgGD">
+        <img src="images/GD_Logo.jpg">
+    </div>
+</div>
+<div id="infoBar">
+</div>
+<div id="menuBar">
+</div>
+<div id="Content">
+
+    <div id="setAddr">
+        <h3>Add aHMI by specifying IP address: </h3>
+        <label>
+            <input type="text" name="ipAddr">
+        </label>
+        <button onclick="setAddr()" > Ok </button>
+    </div>
+
+    <!--<div class="aHMI">-->
+        <!--<p>Your network IP is: <h1 id=list>-</h1> Make the locals proud.</p>-->
+    <!--</div>-->
+
+    <div id="aHMIList" class="aHMI collapsed">
+    </div>
+    <div id="id01" class="aHMI visible" ></div>
+</div>
+
+</body>
+</html>
