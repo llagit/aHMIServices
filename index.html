@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <script type="text/javascript" src="scripts/utils.js" ></script>
     <script type="text/javascript" src="scripts/app.js" ></script>
+
     <title></title>
 </head>
 <body >
@@ -31,6 +32,7 @@
     </div>
 </div>
 <div id="infoBar">
+    <div id="messages"></div>
 </div>
 <div id="menuBar">
 </div>
@@ -41,7 +43,12 @@
         <label>
             <input type="text" name="ipAddr">
         </label>
-        <button onclick="setAddr()" > Ok </button>
+        <button id="addaHMIButton" onclick="setAddr()" > Ok </button>
+
+        <p>Or check within your network...</p>
+        <button id="checkForaHMIButton" onclick="checkForaHMI()" > Check for aHMI </button>
+
+        <button  onclick="startCheckForaHMI()" > Check for aHMI </button>
     </div>
 
     <!--<div class="aHMI">-->
@@ -50,7 +57,8 @@
 
     <div id="aHMIList" class="aHMI collapsed">
     </div>
-    <div id="id01" class="aHMI visible" ></div>
+    <br><br><br>
+    <div id="id01" class="aHMI" ></div>
 </div>
 
 </body>

@@ -1,11 +1,108 @@
-
+var allAddrs = [];
 var myIP=[];
+var workerFindaHMIDefault;
+var workerFindaHMIOnLAN;
 
 window.onload = function (){
 
-    //getClientIPs();
+    startWorker();
+
+    document.getElementById("messages").innerHTML = "Search for aHMIs in default network...";
+
+    getClientIPs();
+
+    //allAddrs.forEach(function(s){
+    //    document.getElementById("id01").innerHTML += s + ", ";
+    //    document.getElementById("id01").innerHTML += s + ", ";
+    //});
 
 };
+
+
+
+function startWorker() {
+    if(typeof(Worker) !== "undefined") {
+        if(typeof(workerFindaHMIDefault) == "undefined") {
+            workerFindaHMIDefault = new Worker("scripts/wwFindaHmi.js");
+            //workerFindaHMIDefault.postMessage();
+        }
+        workerFindaHMIDefault.onmessage = function(event) {
+            document.getElementById("messages").innerHTML = event.data;
+
+        };
+    } else {
+        document.getElementById("result").innerHTML = "Sorry, your browser does not support Web Workers...";
+    }
+}
+
+function stopWorker() {
+    workerFindaHMIDefault.terminate();
+    workerFindaHMIDefault = undefined;
+}
+
+function startCheckForaHMI(){
+
+    var objData = new ArrayBuffer(allAddrs.length);
+
+    allAddrs.forEach(function(s){
+        objData.push(s);
+    });
+
+    workerFindaHMIDefault.postMessage(objData,[objData]);
+}
+
+function checkForaHMI(){
+
+
+    if(typeof(Worker) !== "undefined") {
+        if(typeof(workerFindaHMIOnLAN) == "undefined") {
+            workerFindaHMIOnLAN = new Worker('scripts/wwFindaHMIOverLAN.js');
+            workerFindaHMIOnLAN.postMessage = workerFindaHMIOnLAN.webkitPostMessage || workerFindaHMIOnLAN.postMessage;
+
+        }
+        workerFindaHMIOnLAN.onmessage = function(event) {
+            document.getElementById("messages").innerHTML = event.data;
+
+        };
+    } else {
+        document.getElementById("messages").innerHTML = "Sorry, your browser does not support Web Workers...";
+    }
+
+    //xmlhttp.onreadystatechange = function() {
+    //    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+    //        return true;
+    //    }else return false;
+    //
+    //};
+
+    //allAddrs.forEach(function(s))
+    //
+    //var url = "http://" +  + ":8008/RestDataExchange/service/web/GetAHMIInfo";
+    //
+    //var xmlhttp = new XMLHttpRequest();
+    //xmlhttp.timeout = 1;
+    //xmlhttp.open('GET', url, false);
+    //
+    //try { //xmlhttp.open("GET", url, true);
+    //    xmlhttp.send();
+    //
+    //    //return xmlhttp.responseText;
+    //    if (xmlhttp.status == 200 || xmlhttp.status == 304) {
+    //        //xmlDoc=xhttp.responseXML;
+    //
+    //        return true;
+    //
+    //        //if(xmlDoc==null)
+    //        //{
+    //        //    xmlDoc=loadXMLDoc(defaultXml);
+    //        //}
+    //    }
+    //} catch (e) {
+    //    return false;
+    //    //postMessage(url + " not found!");
+    //}
+
+}
 
 function setAddr(){
 
@@ -75,7 +172,7 @@ function getLanguages(s){
                 var theButton = document.createElement("BUTTON");
                 theButton.style.marginRight = "10px";
                 EventUtil.addHandler(theButton,'click',function(){
-                    setLanguage(theButton);
+                    setLanguage(ip,theButton);
                 });
                 var theButtonText = document.createTextNode(s);
                 theButton.appendChild(theButtonText);
@@ -111,11 +208,11 @@ function getLanguages(s){
     xmlhttp.send();
 }
 
-function setLanguage(s){
+function setLanguage(s,e){
     var xmlhttp = new XMLHttpRequest();
     //var url = "http://10.11.28.64:8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + s.innerHTML;
-    var ip = s.parentElement.parentElement.firstElementChild.innerText;
-    var url = "http://" + ip + ":8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + s.innerHTML;
+    var ip = s;
+    var url = "http://" + ip + ":8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + e.innerHTML;
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 
@@ -346,138 +443,75 @@ function getNominalVelocityService(s){
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 }
-//
-//function getClientIPs() {
-//// NOTE: window.RTCPeerConnection is "not a constructor" in FF22/23
-//    var RTCPeerConnection = /*window.RTCPeerConnection ||*/ window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-//    if (RTCPeerConnection) (function () {
-//        var rtc = new RTCPeerConnection({iceServers: []});
-//        if (1 || window.mozRTCPeerConnection) {      // FF [and now Chrome!] needs a channel/stream to proceed
-//            rtc.createDataChannel('', {reliable: false});
-//        }
-//        ;
-//
-//        rtc.onicecandidate = function (evt) {
-//            // convert the candidate to SDP so we can run it through our general parser
-//            // see https://twitter.com/lancestout/status/525796175425720320 for details
-//            if (evt.candidate) grepSDP("a=" + evt.candidate.candidate);
-//        };
-//        rtc.createOffer(function (offerDesc) {
-//            grepSDP(offerDesc.sdp);
-//            rtc.setLocalDescription(offerDesc);
-//        }, function (e) {
-//            console.warn("offer failed", e);
-//        });
-//        var addrs = Object.create(null);
-//        addrs["0.0.0.0"] = false;
-//        function updateDisplay(newAddr) {
-//            if (newAddr in addrs) return;
-//            else addrs[newAddr] = true;
-//
-//            //var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1] + '.' + newAddr.split('.')[2];
-//            //var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1];
-//            //for(i=20; i<30;i++) {
-//            //
-//            //    for (j = 0; j < 255; j++) {
-//            //        var ip = initIP + '.' + i + '.' + j;
-//            //        getAHMIInfo(ip);
-//            //        console.log(ip);
-//            //    }
-//            //}
-//            var displayAddrs = Object.keys(addrs).filter(function (k) {
-//                return addrs[k];
-//            });
-//            document.getElementById('list').textContent = displayAddrs.join(" or perhaps ") || "n/a";
-//        }
-//        function grepSDP(sdp) {
-//            var hosts = [];
-//            sdp.split('\r\n').forEach(function (line) { // c.f. http://tools.ietf.org/html/rfc4566#page-39
-//                if (~line.indexOf("a=candidate")) {     // http://tools.ietf.org/html/rfc4566#section-5.13
-//                    var parts = line.split(' '),        // http://tools.ietf.org/html/rfc5245#section-15.1
-//                        addr = parts[4],
-//                        type = parts[7];
-//                    if (type === 'host') updateDisplay(addr);
-//                } else if (~line.indexOf("c=")) {       // http://tools.ietf.org/html/rfc4566#section-5.7
-//                    var parts = line.split(' '),
-//                        addr = parts[2];
-//                    updateDisplay(addr);
-//                }
-//            });
-//        }
-//    })(); else {
-//        document.getElementById('list').innerHTML = "<code>ifconfig | grep inet | grep -v inet6 | cut -d\" \" -f2 | tail -n1</code>";
-//        document.getElementById('list').nextSibling.textContent = "In Chrome and Firefox your IP should display automatically, by the power of WebRTCskull.";
-//    }
-//}
 
-//function myFunction(arr) {
-//    var out = "";
-//    var i;
-//    for(i = 0; i < arr.GetLanguageListResult.length; i++) {
-//        out += '<button onclick="setLanguage(this)">' + arr.GetLanguageListResult[i] + '</button>';
-//    }
-//    document.getElementById("id01").innerHTML = out;
-//}
 
-//function getRtcState(rtc) {
-//// NOTE: window.RTCPeerConnection is "not a constructor" in FF22/23
-//    //var RTCPeerConnection = /*window.RTCPeerConnection ||*/ window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-//    //if (RTCPeerConnection) (
-//        //function () {
-//
-//            //var rtc = new RTCPeerConnection({iceServers: []});
-//
-//            if (1 || window.mozRTCPeerConnection) {      // FF [and now Chrome!] needs a channel/stream to proceed
-//                rtc.createDataChannel('', {reliable: false});
-//            };
-//
-//            rtc.onopen = function(event) {
-//                //channel.send('sending a message');
-//                console.log('created');
-//            }
-//
-//            rtc.onicecandidate = function (evt) {
-//                // convert the candidate to SDP so we can run it through our general parser
-//                // see https://twitter.com/lancestout/status/525796175425720320 for details
-//                if (evt.candidate) grepSDP("a=" + evt.candidate.candidate);
-//            };
-//
-//            rtc.createOffer(function (offerDesc) {
-//                grepSDP(offerDesc.sdp);
-//                rtc.setLocalDescription(offerDesc);
-//            }, function (e) {
-//                console.warn("offer failed", e);
-//            });
-//
-//        //})();
-//    //else {
-//    //    document.getElementById('list').innerHTML = "<code>ifconfig | grep inet | grep -v inet6 | cut -d\" \" -f2 | tail -n1</code>";
-//    //    document.getElementById('list').nextSibling.textContent = "In Chrome and Firefox your IP should display automatically, by the power of WebRTCskull.";
-//    //}
-//}
-//
-//function updateDisplay(newAddr) {
-//
-//    if (newAddr in addrs) return;
-//    else addrs[newAddr] = true;
-//
-//    var displayAddrs = Object.keys(addrs).filter(function (k) {
-//        return addrs[k];
-//    });
-//    document.getElementById('list').textContent = displayAddrs.join(" or perhaps ") || "n/a";
-//}
-//
-//function grepSDP(sdp) {
-//    var hosts = [];
-//    sdp.split('\r\n').forEach(function (line) { // c.f. http://tools.ietf.org/html/rfc4566#page-39
-//        if (~line.indexOf("a=candidate")) {     // http://tools.ietf.org/html/rfc4566#section-5.13
-//            var parts = line.split(' '),        // http://tools.ietf.org/html/rfc5245#section-15.1
-//                addr = parts[4],
-//                type = parts[7];
-//            if (type === 'host') updateDisplay(addr);
-//        } else if (~line.indexOf("c=")) {       // http://tools.ietf.org/html/rfc4566#section-5.7
-//            var parts = line.split(' '), addr = parts[2];
-//            updateDisplay(addr);
-//        }
-//    });
-//}
+
+function getClientIPs() {
+
+
+// NOTE: window.RTCPeerConnection is "not a constructor" in FF22/23
+    var RTCPeerConnection = /*window.RTCPeerConnection ||*/ window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+
+    if (RTCPeerConnection) (function () {
+        var rtc = new RTCPeerConnection({iceServers:[]});
+        if (1 || window.mozRTCPeerConnection) {      // FF [and now Chrome!] needs a channel/stream to proceed
+            rtc.createDataChannel('', {reliable:false});
+        };
+
+        rtc.onicecandidate = function (evt) {
+            // convert the candidate to SDP so we can run it through our general parser
+            // see https://twitter.com/lancestout/status/525796175425720320 for details
+            if (evt.candidate) grepSDP("a="+evt.candidate.candidate);
+        };
+        rtc.createOffer(function (offerDesc) {
+            grepSDP(offerDesc.sdp);
+            rtc.setLocalDescription(offerDesc);
+        }, function (e) { console.warn("offer failed", e); });
+
+
+        var addrs = Object.create(null);
+        addrs["0.0.0.0"] = false;
+        function updateDisplay(newAddr) {
+            if (newAddr in addrs) return;
+            else addrs[newAddr] = true;
+
+            if (addrs[newAddr]) {
+                var j = 0;
+                var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1] + '.' + newAddr.split('.')[2];
+                for (j=0; j<255; j++){
+                    var thisip = initIP + '.' + j;
+                    if (thisip != newAddr)
+                        allAddrs.push(thisip);
+                }
+
+                //workerFindaHMIDefault.postMessage(newAddr);
+            }
+
+
+            var displayAddrs = Object.keys(addrs).filter(function (k) { return addrs[k]; });
+            document.getElementById('id01').textContent = displayAddrs.join(" or perhaps ") || "n/a";
+            document.getElementById('id01').textContent += ' --- ' + allAddrs.length;
+        }
+
+        function grepSDP(sdp) {
+            var hosts = [];
+            sdp.split('\r\n').forEach(function (line) { // c.f. http://tools.ietf.org/html/rfc4566#page-39
+                if (~line.indexOf("a=candidate")) {     // http://tools.ietf.org/html/rfc4566#section-5.13
+                    var parts = line.split(' '),        // http://tools.ietf.org/html/rfc5245#section-15.1
+                        addr = parts[4],
+                        type = parts[7];
+                    if (type === 'host') updateDisplay(addr);
+                } else if (~line.indexOf("c=")) {       // http://tools.ietf.org/html/rfc4566#section-5.7
+                    var parts = line.split(' '),
+                        addr = parts[2];
+                    updateDisplay(addr);
+                }
+            });
+        }
+    })(); else {
+        document.getElementById('id01').innerHTML = "WebRTC not available...";
+    }
+
+}
+
+
