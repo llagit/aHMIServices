@@ -40,30 +40,23 @@ function stopWorker() {
     workerFindaHMIDefault = undefined;
 }
 
-function startCheckForaHMI(){
-
-    var objData = new ArrayBuffer(allAddrs.length);
-
-    allAddrs.forEach(function(s){
-        objData.push(s);
-    });
-
-    workerFindaHMIDefault.postMessage(objData,[objData]);
-}
-
 function checkForaHMI(){
 
 
     if(typeof(Worker) !== "undefined") {
         if(typeof(workerFindaHMIOnLAN) == "undefined") {
             workerFindaHMIOnLAN = new Worker('scripts/wwFindaHMIOverLAN.js');
-            workerFindaHMIOnLAN.postMessage = workerFindaHMIOnLAN.webkitPostMessage || workerFindaHMIOnLAN.postMessage;
 
         }
         workerFindaHMIOnLAN.onmessage = function(event) {
-            document.getElementById("messages").innerHTML = event.data;
+            if(event.data != "Not found.")
+            {
+                getAHMIInfo(event.data)
+            }
+
 
         };
+        workerFindaHMIOnLAN.postMessage(JSON.stringify(allAddrs));
     } else {
         document.getElementById("messages").innerHTML = "Sorry, your browser does not support Web Workers...";
     }
@@ -476,12 +469,20 @@ function getClientIPs() {
             else addrs[newAddr] = true;
 
             if (addrs[newAddr]) {
+                var i = 0;
                 var j = 0;
-                var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1] + '.' + newAddr.split('.')[2];
-                for (j=0; j<255; j++){
-                    var thisip = initIP + '.' + j;
-                    if (thisip != newAddr)
-                        allAddrs.push(thisip);
+                //var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1] + '.' + newAddr.split('.')[2];
+
+                var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1];
+
+                if (newAddr.split('.')[0] != '192') {
+                    for (i = 20; i < 30; i++) {
+                        for (j = 0; j < 255; j++) {
+                            var thisip = initIP + '.' + i + '.' + j;
+                            if (thisip != newAddr)
+                                allAddrs.push(thisip);
+                        }
+                    }
                 }
 
                 //workerFindaHMIDefault.postMessage(newAddr);
