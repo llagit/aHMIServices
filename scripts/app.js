@@ -2,10 +2,13 @@ var allAddrs = [];
 var myIP=[];
 var workerFindaHMIDefault;
 var workerFindaHMIOnLAN;
+var line;
+var localIPAddressesInfo;
 
 window.onload = function (){
 
-    AddTextInfoOnContentTagAndHideAddAddress("Searching in known ip list...");
+    line = new ProgressBar.Line("#pgContainer",{ color: '#D70932', strokeWidth: 3});
+
     getClientIPs();
 
     startWorker();
@@ -17,6 +20,7 @@ function AddTextInfoOnContentTagAndHideAddAddress(text){
     document.getElementById("setAddr").classList.toggle("collapsed");
 
     var title = document.getElementById("Content").firstElementChild;
+
     if(title.id == "TextInfo"){
         title.parentNode.removeChild(title);
     }
@@ -27,7 +31,8 @@ function AddTextInfoOnContentTagAndHideAddAddress(text){
     var messText = document.createTextNode(text); //"Searching in detected network..."
     title.appendChild(messText);
 
-    document.getElementById("Content").insertBefore(title,document.getElementById("setAddr"));
+
+    document.getElementById("Content").insertBefore(title,document.getElementById("mainPgContainer"));
 
 }
 
@@ -35,11 +40,15 @@ function AddTextInfoOnContentTagAndHideAddAddress(text){
 function RemoveTextInfoOnContentTagAndShowAddAddress(){
 
 
-    var title = document.getElementById("Content").firstElementChild;
-    if(title.id != "TextInfo")
-        return;
-    else
-        title.parentNode.removeChild(title);
+
+    document.getElementById("Content").removeChild(document.getElementById("TextInfo"));
+
+    //var title = document.getElementById("Content").firstElementChild;
+    //if(title.id != "TextInfo")
+    //    return;
+    //else
+    //    title.parentNode.removeChild(title);
+
 
     document.getElementById("setAddr").classList.toggle("collapsed");
 
@@ -107,22 +116,39 @@ function checkForaHMIOnGivenIP(IP){
 
 
 function startWorker() {
+
+
     if(typeof(Worker) !== "undefined") {
         if(typeof(workerFindaHMIDefault) == "undefined") {
             workerFindaHMIDefault = new Worker("scripts/wwFindaHmi.js");
-            //workerFindaHMIDefault.postMessage();
+
+            AddTextInfoOnContentTagAndHideAddAddress("Searching in known ip list...");
+
+            document.getElementById("mainPgContainer").classList.remove("collapsed");
+
+
+
         }
         workerFindaHMIDefault.onmessage = function(event) {
-
-            RemoveTextInfoOnContentTagAndShowAddAddress();
-
-            if(event.data != "Not found.")
-            {
-                if(myIP.indexOf(event.data) == -1)
-                    myIP.push(event.data);
-
-                getAHMIInfo(event.data)
-            }document.getElementById("messages").innerHTML = "aHMI not found on know IP addresses...";
+            var ans = event.data.split('|')[0];
+            var val = event.data.split('|')[1];
+            switch (ans){
+                case "step":
+                    line.animate(Number(val)/event.data.split('|')[2]);
+                    break;
+                case "Not found.":
+                    RemoveTextInfoOnContentTagAndShowAddAddress();
+                    document.getElementById("messages").innerHTML = "aHMI not found on know IP addresses...";
+                    document.getElementById("mainPgContainer").classList.add("collapsed");
+                    break;
+                case "IP":
+                    RemoveTextInfoOnContentTagAndShowAddAddress();
+                    document.getElementById("mainPgContainer").classList.add("collapsed");
+                    if(myIP.indexOf(val) == -1)
+                        myIP.push(val);
+                    getAHMIInfo(val);
+                    break;
+            }
 
 
         };
@@ -138,24 +164,55 @@ function stopWorker() {
 
 function checkForaHMI(){
 
+
     if(typeof(Worker) !== "undefined") {
         if(typeof(workerFindaHMIOnLAN) == "undefined") {
             workerFindaHMIOnLAN = new Worker('scripts/wwFindaHMIOverLAN.js');
 
-            AddTextInfoOnContentTagAndHideAddAddress("Searching in detected network...");
+            AddTextInfoOnContentTagAndHideAddAddress("Searching in detected network (local ip found: " + localIPAddressesInfo + ")...");
+
+            //var pgContainer = document.createElement("DIV");
+            //pgContainer.id = "mainPgContainer";
+            //var pg = document.createElement("DIV");
+            //pg.id = "pgContainer";
+            //pgContainer.appendChild(pg);
+            //pgContainer.classList.add("progressbar");
+            //pgContainer.className = "progressbar";
+
+            document.getElementById("mainPgContainer").classList.remove("collapsed");
+            line.set(0);
 
         }
+
         workerFindaHMIOnLAN.onmessage = function(event) {
-
-            RemoveTextInfoOnContentTagAndShowAddAddress();
-
-            if(event.data != "Not found.")
-            {
-                if(myIP.indexOf(event.data) == -1)
-                    myIP.push(event.data);
-
-                getAHMIInfo(event.data)
+            var ans = event.data.split('|')[0];
+            var val = event.data.split('|')[1];
+            switch (ans){
+                case "step":
+                    line.animate(Number(val)/allAddrs.length);
+                    break;
+                case "Not found.":
+                    RemoveTextInfoOnContentTagAndShowAddAddress();
+                    document.getElementById("mainPgContainer").classList.add("collapsed");
+                    break;
+                case "IP":
+                    RemoveTextInfoOnContentTagAndShowAddAddress();
+                    document.getElementById("mainPgContainer").classList.add("collapsed");
+                    if(myIP.indexOf(val) == -1)
+                        myIP.push(val);
+                    getAHMIInfo(val);
+                    break;
             }
+
+
+
+            //if(event.data != "Not found.")
+            //{
+            //    if(myIP.indexOf(event.data) == -1)
+            //        myIP.push(event.data);
+            //
+            //    getAHMIInfo(event.data)
+            //}
 
 
         };
@@ -587,7 +644,8 @@ function getClientIPs() {
                 checkForaHMIOnGivenIP(newAddr);
             }
             var displayAddrs = Object.keys(addrs).filter(function (k) { return addrs[k]; });
-            document.getElementById('id01').textContent = displayAddrs.join(" or perhaps ") || "n/a";
+            //document.getElementById('id01').textContent = displayAddrs.join(" or perhaps ") || "n/a";
+            localIPAddressesInfo = displayAddrs.join(" or perhaps ") || "n/a";
         }
 
         function grepSDP(sdp) {

@@ -4,6 +4,7 @@
     <link rel="stylesheet" type="text/css" href="styles/style.css"/>
     <meta charset="UTF-8">
     <script type="text/javascript" src="scripts/utils.js" ></script>
+    <script type="text/javascript" src="scripts/progressbar.js" ></script>
     <script type="text/javascript" src="scripts/app.js" ></script>
 
     <title></title>
@@ -32,12 +33,15 @@
     </div>
 </div>
 <div id="infoBar">
-    <div id="messages"></div>
+    <div id="messages" class="infoMess"></div>
 </div>
 <div id="menuBar">
 </div>
 <div id="Content">
 
+    <div id="mainPgContainer" class="mainProgressbar collapsed">
+        <div id="pgContainer" class="progressbar"></div>
+    </div>
     <div id="setAddr">
         <h3>Add aHMI by specifying IP address: </h3>
         <label>
@@ -53,10 +57,10 @@
         <!--<p>Your network IP is: <h1 id=list>-</h1> Make the locals proud.</p>-->
     <!--</div>-->
 
-    <div id="aHMIList" class="aHMI collapsed">
+    <div id="aHMIList" class="collapsed">
     </div>
     <br><br><br>
-    <div id="id01" class="aHMI" ></div>
+    <div id="id01" ></div>
 </div>
 
 </body>

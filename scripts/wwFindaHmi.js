@@ -47,11 +47,8 @@ function getaHMIIPs()
         }
     }
 
-    //var res = checkAddress(allAddrs[count]);
-    //postMessage(res);
-
     if(checkAddress(allAddrs[count])){
-        postMessage(allAddrs[count]);
+        postMessage("IP|" + allAddrs[count]);
 
         foundOne = true;
 
@@ -63,6 +60,8 @@ function getaHMIIPs()
 
         self.close();
     }
+
+    postMessage("step|" + count + "|" + allAddrs.length);
 
     count = count +1;
 

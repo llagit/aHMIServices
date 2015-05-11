@@ -43,7 +43,7 @@ function checkForaHMI(){
 
             // all is well
             if(xmlhttp.readyState === 4) {
-                postMessage(allAddrs[count]);
+                postMessage("IP|" + allAddrs[count]);
                 foundOne = true;
 
             }
@@ -66,10 +66,10 @@ function checkForaHMI(){
             //return false;
             //postMessage(url + " not found!");
         }
-
+        postMessage("step|" + count);
         if (count == (allAddrs.length - 1)) {
             if (!foundOne)
-                postMessage("Not found.");
+                postMessage("Not found.|0");
 
             //postMessage("Searched " + count + " - " + allAddrs.length + ". Not found.");
 
