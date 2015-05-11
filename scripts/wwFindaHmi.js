@@ -11,29 +11,28 @@ function checkAddress(ip) {
     var url = "http://" + ip + ":8008/RestDataExchange/service/web/GetAHMIInfo";
 
     var xmlhttp = new XMLHttpRequest();
-    xmlhttp.timeout = 1;
+    xmlhttp.timeout = 20;
     xmlhttp.open('GET', url, false);
 
-    try { //xmlhttp.open("GET", url, true);
-        xmlhttp.send();
+    try {
 
-        //return xmlhttp.responseText;
-        if (xmlhttp.status == 200 || xmlhttp.status == 304) {
-            //xmlDoc=xhttp.responseXML;
+        xmlhttp.send('');
 
-            return true;
-
-            //if(xmlDoc==null)
-            //{
-            //    xmlDoc=loadXMLDoc(defaultXml);
-            //}
+        if(xmlhttp.readyState < 4) {
+            return false;
         }
+
+        if(xmlhttp.status !== 200) {
+            return false;
+        }
+
+        if(xmlhttp.readyState === 4) {
+            return true;
+        }
+
     } catch (e) {
         return false;
-        //postMessage(url + " not found!");
     }
-
-
 }
 
 function getaHMIIPs()
@@ -45,24 +44,22 @@ function getaHMIIPs()
         for (i = 0; i < 255; i++) {
             var ip = initIP + '.' + i;
             allAddrs.push(ip);
-
-            //postMessage(ip);
         }
-        //getClientIPs()
     }
 
     //var res = checkAddress(allAddrs[count]);
     //postMessage(res);
 
     if(checkAddress(allAddrs[count])){
-        postMessage("Found aHMI at " + allAddrs[count] + " !");
+        postMessage(allAddrs[count]);
+
         foundOne = true;
 
     }
 
     if(count == (allAddrs.length - 1)){
         if(!foundOne)
-            postMessage("Searched " + count + " - " + allAddrs.length + ". Not found.");
+            postMessage("Not found.");
 
         self.close();
     }
@@ -71,10 +68,5 @@ function getaHMIIPs()
 
     setTimeout("getaHMIIPs()",20);
 }
-
-//self.onmessage = function(event) {
-//    document.getElementById("messages").innerHTML = "Found aHMI IP: " + event.data;
-//
-//};
 
 getaHMIIPs();

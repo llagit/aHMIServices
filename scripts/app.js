@@ -5,19 +5,105 @@ var workerFindaHMIOnLAN;
 
 window.onload = function (){
 
-    startWorker();
-
-    document.getElementById("messages").innerHTML = "Search for aHMIs in default network...";
-
+    AddTextInfoOnContentTagAndHideAddAddress("Searching in known ip list...");
     getClientIPs();
 
-    //allAddrs.forEach(function(s){
-    //    document.getElementById("id01").innerHTML += s + ", ";
-    //    document.getElementById("id01").innerHTML += s + ", ";
-    //});
+    startWorker();
 
 };
 
+function AddTextInfoOnContentTagAndHideAddAddress(text){
+
+    document.getElementById("setAddr").classList.toggle("collapsed");
+
+    var title = document.getElementById("Content").firstElementChild;
+    if(title.id == "TextInfo"){
+        title.parentNode.removeChild(title);
+    }
+
+    title = document.createElement("H2");
+    title.id = "TextInfo";
+
+    var messText = document.createTextNode(text); //"Searching in detected network..."
+    title.appendChild(messText);
+
+    document.getElementById("Content").insertBefore(title,document.getElementById("setAddr"));
+
+}
+
+
+function RemoveTextInfoOnContentTagAndShowAddAddress(){
+
+
+    var title = document.getElementById("Content").firstElementChild;
+    if(title.id != "TextInfo")
+        return;
+    else
+        title.parentNode.removeChild(title);
+
+    document.getElementById("setAddr").classList.toggle("collapsed");
+
+}
+
+function checkForaHMIOnGivenIP(IP){
+
+    var url = "http://" + IP + ":8008/RestDataExchange/service/web/GetAHMIInfo";
+
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open('GET', url, true);
+
+
+    xmlhttp.onreadystatechange = ( function(x, i) {
+        return function() {
+            if (x.readyState == 4) {
+                if (x.status == 200) {
+                    getAHMIInfo(i);
+                }
+                //else alert("Not found!");
+            }
+
+        }
+    })(xmlhttp, IP);
+
+    //xmlhttp.onreadystatechange = function() {
+    //    if (xmlhttp.readyState == 4) {
+    //        if (xmlhttp.status == 200) {
+    //            getAHMIInfo("localhost");
+    //        } else
+    //            alert("Not found!");
+    //    }
+    //
+    //};
+
+    try { //xmlhttp.open("GET", url, true);
+        xmlhttp.send('');
+
+        //
+        //if(xmlhttp.readyState < 4) {
+        //    return false;
+        //}
+        //
+        //if(xmlhttp.status !== 200) {
+        //    return false;
+        //}
+        //
+        //// all is well
+        //if(xmlhttp.readyState === 4) {
+        //    return true;
+        //
+        //}
+
+        //return xmlhttp.responseText;
+        //if (xmlhttp.status == 200 || xmlhttp.status == 304) {
+        //xmlDoc=xhttp.responseXML;
+
+        //return true;
+
+    } catch (e) {
+        return false;
+    }
+
+}
 
 
 function startWorker() {
@@ -27,11 +113,21 @@ function startWorker() {
             //workerFindaHMIDefault.postMessage();
         }
         workerFindaHMIDefault.onmessage = function(event) {
-            document.getElementById("messages").innerHTML = event.data;
+
+            RemoveTextInfoOnContentTagAndShowAddAddress();
+
+            if(event.data != "Not found.")
+            {
+                if(myIP.indexOf(event.data) == -1)
+                    myIP.push(event.data);
+
+                getAHMIInfo(event.data)
+            }document.getElementById("messages").innerHTML = "aHMI not found on know IP addresses...";
+
 
         };
     } else {
-        document.getElementById("result").innerHTML = "Sorry, your browser does not support Web Workers...";
+        //document.getElementById("result").innerHTML = "Sorry, your browser does not support Web Workers...";
     }
 }
 
@@ -42,21 +138,31 @@ function stopWorker() {
 
 function checkForaHMI(){
 
-
     if(typeof(Worker) !== "undefined") {
         if(typeof(workerFindaHMIOnLAN) == "undefined") {
             workerFindaHMIOnLAN = new Worker('scripts/wwFindaHMIOverLAN.js');
 
+            AddTextInfoOnContentTagAndHideAddAddress("Searching in detected network...");
+
         }
         workerFindaHMIOnLAN.onmessage = function(event) {
+
+            RemoveTextInfoOnContentTagAndShowAddAddress();
+
             if(event.data != "Not found.")
             {
+                if(myIP.indexOf(event.data) == -1)
+                    myIP.push(event.data);
+
                 getAHMIInfo(event.data)
             }
 
 
         };
+
+        // Send all IPs array to web worker....
         workerFindaHMIOnLAN.postMessage(JSON.stringify(allAddrs));
+
     } else {
         document.getElementById("messages").innerHTML = "Sorry, your browser does not support Web Workers...";
     }
@@ -100,8 +206,9 @@ function checkForaHMI(){
 function setAddr(){
 
     var text = document.getElementsByName('ipAddr');
-    //var num = myIP.length;
-    myIP.push(text[0].value);
+
+    if(myIP.indexOf(text[0].value) == -1)
+        myIP.push(text[0].value);
 
     if(!document.getElementById(text[0].value))
         getAHMIInfo(myIP[myIP.length-1]);
@@ -111,31 +218,33 @@ function setAddr(){
 function getAHMIInfo(ip) {
     var xmlhttp = new XMLHttpRequest();
 
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-            var myArr = JSON.parse(xmlhttp.responseText);
+    xmlhttp.onreadystatechange = (function (x,i) {
+        return function () {
+            if (x.readyState == 4 && x.status == 200) {
+                var myArr = JSON.parse(x.responseText);
 
-            var thisIp = myIP[myIP.length-1];
+                //var thisIp = myIP[myIP.length - 1];
 
-            var out = "<div class='hmi'>";
-            out += "<span hidden id='" + thisIp + "' ></span>";
-            out += "<h1>aHMI Found!</h1>";
-            out += "<p>"+ myArr.GetAHMIInfoResult.PcName + "</p>";
-            out += "<p>"+ myArr.GetAHMIInfoResult.aHMIVersion + "</p>";
-            out += "<div id='"+ thisIp +"_getLanguages' class='servicesChoice'><button onclick='getLanguages(this)'>Get Languages</button></div>";
-            out += "<div id='"+ thisIp +"_getMessageHistoryList' class='servicesChoice'><button onclick='getMessageHistoryList(this)'>Get Messages</button></div>";
-            out += "<div id='"+ thisIp +"_getMachineList' class='servicesChoice'><button onclick='getMachineList(this)'>Get Machine List</button></div>";
-            out += "<div id='"+ thisIp +"_getCurrentVelocity' class='servicesChoice'><button onclick='getCurrentVelocity(this)'>Get current velocity</button></div>";
-            out += "<div id='"+ thisIp +"_getNominalVelocity' class='servicesChoice'><button onclick='getNominalVelocity(this)'>Get nominal velocity</button></div>";
-            out += "</div>";
+                var out = "<div class='hmi'>";
+                out += "<span hidden id='" + i + "' ></span>";
+                out += "<h1>aHMI Found!</h1>";
+                out += "<p>" + myArr.GetAHMIInfoResult.PcName + "</p>";
+                out += "<p>" + myArr.GetAHMIInfoResult.aHMIVersion + "</p>";
+                out += "<div id='" + i + "_getLanguages' class='servicesChoice'><button onclick='getLanguages(this)'>Get Languages</button></div>";
+                out += "<div id='" + i + "_getMessageHistoryList' class='servicesChoice'><button onclick='getMessageHistoryList(this)'>Get Messages</button></div>";
+                out += "<div id='" + i + "_getMachineList' class='servicesChoice'><button onclick='getMachineList(this)'>Get Machine List</button></div>";
+                out += "<div id='" + i + "_getCurrentVelocity' class='servicesChoice'><button onclick='getCurrentVelocity(this)'>Get current velocity</button></div>";
+                out += "<div id='" + i + "_getNominalVelocity' class='servicesChoice'><button onclick='getNominalVelocity(this)'>Get nominal velocity</button></div>";
+                out += "</div>";
 
 
-            document.getElementById("aHMIList").innerHTML += out;
-            document.getElementById("aHMIList").classList.remove('collapsed');
+                document.getElementById("aHMIList").innerHTML += out;
+                document.getElementById("aHMIList").classList.remove('collapsed');
 
+            }
         }
 
-    };
+    })(xmlhttp,ip);
 
     var url = "http://" + ip + ":8008/RestDataExchange/service/web/GetAHMIInfo";
     xmlhttp.open("GET", url, true);
@@ -204,8 +313,7 @@ function getLanguages(s){
 function setLanguage(s,e){
     var xmlhttp = new XMLHttpRequest();
     //var url = "http://10.11.28.64:8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + s.innerHTML;
-    var ip = s;
-    var url = "http://" + ip + ":8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + e.innerHTML;
+    var url = "http://" + s + ":8008/RestDataExchange/service/web/SetCurrentLanguage?language=" + e.innerHTML;
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 
@@ -440,17 +548,13 @@ function getNominalVelocityService(s){
 
 
 function getClientIPs() {
-
-
 // NOTE: window.RTCPeerConnection is "not a constructor" in FF22/23
     var RTCPeerConnection = /*window.RTCPeerConnection ||*/ window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-
     if (RTCPeerConnection) (function () {
         var rtc = new RTCPeerConnection({iceServers:[]});
         if (1 || window.mozRTCPeerConnection) {      // FF [and now Chrome!] needs a channel/stream to proceed
             rtc.createDataChannel('', {reliable:false});
-        };
-
+        }
         rtc.onicecandidate = function (evt) {
             // convert the candidate to SDP so we can run it through our general parser
             // see https://twitter.com/lancestout/status/525796175425720320 for details
@@ -461,7 +565,6 @@ function getClientIPs() {
             rtc.setLocalDescription(offerDesc);
         }, function (e) { console.warn("offer failed", e); });
 
-
         var addrs = Object.create(null);
         addrs["0.0.0.0"] = false;
         function updateDisplay(newAddr) {
@@ -471,31 +574,24 @@ function getClientIPs() {
             if (addrs[newAddr]) {
                 var i = 0;
                 var j = 0;
-                //var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1] + '.' + newAddr.split('.')[2];
-
                 var initIP = newAddr.split('.')[0] + '.' + newAddr.split('.')[1];
-
-                if (newAddr.split('.')[0] != '192') {
-                    for (i = 20; i < 30; i++) {
-                        for (j = 0; j < 255; j++) {
-                            var thisip = initIP + '.' + i + '.' + j;
-                            if (thisip != newAddr)
-                                allAddrs.push(thisip);
-                        }
+                var min = Math.floor(Number(newAddr.split('.')[2])/10) * 10; // in ip value
+                var max = min + 10; // max ip value
+                for (i = min; i < max; i++) {
+                    for (j = 0; j < 255; j++) {
+                        var thisip = initIP + '.' + i + '.' + j;
+                        if ((thisip != newAddr) && (allAddrs.indexOf(newAddr) == -1))
+                            allAddrs.push(thisip);
                     }
                 }
-
-                //workerFindaHMIDefault.postMessage(newAddr);
+                checkForaHMIOnGivenIP(newAddr);
             }
-
-
             var displayAddrs = Object.keys(addrs).filter(function (k) { return addrs[k]; });
             document.getElementById('id01').textContent = displayAddrs.join(" or perhaps ") || "n/a";
-            document.getElementById('id01').textContent += ' --- ' + allAddrs.length;
         }
 
         function grepSDP(sdp) {
-            var hosts = [];
+            //var hosts = [];
             sdp.split('\r\n').forEach(function (line) { // c.f. http://tools.ietf.org/html/rfc4566#page-39
                 if (~line.indexOf("a=candidate")) {     // http://tools.ietf.org/html/rfc4566#section-5.13
                     var parts = line.split(' '),        // http://tools.ietf.org/html/rfc5245#section-15.1
@@ -512,7 +608,6 @@ function getClientIPs() {
     })(); else {
         document.getElementById('id01').innerHTML = "WebRTC not available...";
     }
-
 }
 
 

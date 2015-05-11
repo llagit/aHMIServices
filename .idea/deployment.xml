@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="aHMIService">
+  <component name="PublishConfigData" serverName="aHMIService" showEqualInSync="true">
     <serverData>
       <paths name="aHMIService">
         <serverdata>

@@ -18,15 +18,15 @@ function checkForaHMI(){
 
         //postMessage("started with " + allAddrs.length);
 
-        if(allAddrs[count] == "10.11.22.71")
-            var l = 2;
+        //if(allAddrs[count] == "10.11.22.71")
+        //    var l = 2;
 
 
         var url = "http://" + allAddrs[count] + ":8008/RestDataExchange/service/web/GetAHMIInfo";
         //var url = "http://10.11.22.71:8008/RestDataExchange/service/web/GetAHMIInfo";
 
         var xmlhttp = new XMLHttpRequest();
-        xmlhttp.timeout = 50;
+        xmlhttp.timeout = 20;
         xmlhttp.open('GET', url, false);
 
         try { //xmlhttp.open("GET", url, true);
@@ -79,7 +79,7 @@ function checkForaHMI(){
         count = count + 1;
     }
     //postMessage("check");
-    setTimeout("checkForaHMI()",50);
+    setTimeout("checkForaHMI()",20);
 }
 
 self.onmessage = function(event) {
